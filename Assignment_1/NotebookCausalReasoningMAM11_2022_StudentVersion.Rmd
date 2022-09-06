@@ -14,7 +14,7 @@ What should you submit? You need to submit:
 # Open part
 
 ## Understand the datase:
-Please Open https://hbiostat.org/data/repo/rhc.html and take a good look at the variables. Make sure you inspect the variables included in the dataset (they appear in a tabel below the text on the website). You can refer to the table whenever needed. 
+Please Open https://hbiostat.org/data/repo/rhc.html and take a good look at the variables. Make sure you inspect the variables included in the dataset (they appear in a table below the text on the website). You can refer to the table whenever needed. 
 
 Packages: install packages if needed
 ```{r}
@@ -41,9 +41,13 @@ Tip: Look at the data, use the "View" command on the dataset "rhc"
 ```{r}
 print("===================================================")
 # => how many rows does rhc contain?
+print('The dataset contains 5735 rows')
 # => What are the variable names?
-# print("===================================================")
+print('The 63 variable names are the following below:')
+names(rhc)
+print("===================================================")
 ```
+
 
 For the assignment the TREATMENT variable is swang1 and the OUTCOME variable is death.
 
