@@ -20,6 +20,9 @@ Packages: install packages if needed
 ```{r}
 install.packages("tableone")
 install.packages("Matching")
+install.packages("tidyverse") #added
+install.packages('rlang')     #added
+
 # Recommended: add "dplyr" if you have used it before to make efficient preprocessing.
 ```
 
@@ -27,6 +30,7 @@ install.packages("Matching")
 ```{r}
 library(tableone) # This library allows us to calculate summary statistics about the variables including the SMD (standardized mean difference).
 library(Matching) # This library will do the matching
+library('dplyr')  #added
 ```
 
 ## Read database
@@ -66,13 +70,26 @@ Let's take a quick look into the dataset using these variables
 ```{r}
 print("===================================================")
 # => What is the mean of outcome.died in the whole data set?
+print('The mean of outcome.died:')
+mean(rhc$outcome.died)
 
 # => How many subjects are treated?
+print('The number of treated subjects:')
+sum(rhc$swang1=='RHC')
+
 # =>  What is the mean mortality (outcome.died) in this treated group?
+print('The mean mortality of treated group:')
+mean(rhc$swang1=='RHC' & rhc$outcome.died == 1)
 
 # => How many subjects are not treated (i.e. in the control group)?
+print('The number of not treated subjects:')
+sum(rhc$swang1=='No RHC')
+
 # => What is the mean mortality in this control group?
-# print("===================================================")
+print('Mean mortality for not treated:')
+mean(rhc$swang1=='No RHC' & rhc$outcome.died == 1)
+
+print("===================================================")
 ```
 
 
@@ -80,7 +97,10 @@ The variable cat1 is a factor (categorical variable) containing the primary dise
 ```{r}
 print("===================================================")
 # => How many different categories are in Cat1? Tip: use the levels() function on this variable.
-# print("===================================================")
+rhc$cat1 <- as.factor(rhc$cat1)  #from chr to factor
+print('There number of categories in cat1:')
+nlevels(rhc$cat1)  
+print("===================================================")
 ```
 
 We would like to "translate" Cat1 into a set of variables each with the numeric values of 0/1. For example for the value of "ARF" we will create a variable "ARF" that will be 1 if rhc$cat1=='ARF'.
@@ -89,7 +109,20 @@ We would like to "translate" Cat1 into a set of variables each with the numeric 
 rhc$ARF <- as.numeric(rhc$cat1=='ARF')
 print("===================================================")
 # => Do the same (as we did for ARF) also for all other values of cat1 but ignore the category "Missing".
-# print("===================================================")
+cat1_list <- list(levels(rhc$cat1))
+print(cat1_list)
+
+# ------- solution to be optimized later on ---------
+rhc$CHF <- as.numeric(rhc$cat1=='CHF')
+rhc$Cirrhosis <- as.numeric(rhc$cat1=='Cirrhosis')
+rhc$Colon_Cancer <- as.numeric(rhc$cat1=='Colon Cancer')
+rhc$Coma <- as.numeric(rhc$cat1=='Coma')
+rhc$COPD <- as.numeric(rhc$cat1=='COPD')
+rhc$Lung_Cancer <- as.numeric(rhc$cat1=='Lung Cancer')
+rhc$MOSF_Malignancy <- as.numeric(rhc$cat1=='MOSF w/Malignancy')
+rhc$MOSF_Sepsis <- as.numeric(rhc$cat1=='MOSF w/Sepsis')
+
+print("===================================================")
 ```
 
 ## Create data frame with variables of interest
@@ -99,7 +132,9 @@ All the underlying categories of "cat1" (ARF etc) that you created before,   "ca
 "female", "edu", "das2d3pc", "aps1", "scoma1", "meanbp1", wblc1", "hrt1",     "resp1", "temp1", "pafi1", "alb1", "hema1", "bili1", "crea1", "sod1", "pot1",     "paco21", "ph1", "wtkilo1", "dnr1", "resp", "card", "neuro", "gastr",  "renal", "meta", "hema", "seps", "trauma",  "ortho", "adld3p", "urin1", "treatment.swang", "outcome.died".
 
 ```{r}
-# rhc.small <- => Create this data frame
+rhc.small<- rhc
+rhc.small[ , c("ARF", "CHF", "Cirrhosis", "Colon_Cancer", "Coma", "COPD", "Lung_Cancer", "MOSF_Malignancy", "MOSF_Sepsis", "cardiohx", "chfhx", "dementhx", "psychhx",  "chrpulhx", "renalhx", "liverhx",  "gibledhx", "malighx",  "immunhx",  "transhx",  "amihx", "age", "female", "edu", "das2d3pc", "aps1", "scoma1", "meanbp1", "wblc1", "hrt1", "resp1", "temp1", "pafi1", "alb1", "hema1", "bili1", "crea1", "sod1", "pot1", "paco21", "ph1", "wtkilo1", "dnr1", "resp", "card", "neuro", "gastr", "renal", "meta", "hema", "seps", "trauma", "ortho", "adld3p", "urin1", "treatment.swang", "outcome.died")]
+
 ```
 
 Make sure you take a look at the definition of variables (on the URL given above) with unclear names to you. This data frame includes now all candidate variables from which we will select later for matching. However, before we jump into variable selection let us continue data class conversion.
