@@ -9,8 +9,8 @@ What should you submit? You need to submit:
 1. This Notebook (in .Rmd format) after filling in all your answers inside this notebook. You are required to do an action (write or fill-in code or write documentation) at the places marked by an arrow (=>). This arrow appears within the comments (and it will be preceeded by "#") or outside the comments in the text (without "#").
 2. The Notebook in html format with all the results.
 
-==> Student names: Elena Deiana, 
-==> Student numbers: 14110822, 
+==> Student names: Elena Deiana, Ramon Cremers
+==> Student numbers: 14110822, 14090945
 # Open part
 
 ## Understand the datase:
@@ -38,6 +38,7 @@ library('dplyr')  #added
 # Download rhc dataset from CANVAS and read it
 rhc <- read.csv("rhc.csv")
 ```
+
 
 
 ## Understanding the dataset  
@@ -132,8 +133,10 @@ All the underlying categories of "cat1" (ARF etc) that you created before,   "ca
 "female", "edu", "das2d3pc", "aps1", "scoma1", "meanbp1", wblc1", "hrt1",     "resp1", "temp1", "pafi1", "alb1", "hema1", "bili1", "crea1", "sod1", "pot1",     "paco21", "ph1", "wtkilo1", "dnr1", "resp", "card", "neuro", "gastr",  "renal", "meta", "hema", "seps", "trauma",  "ortho", "adld3p", "urin1", "treatment.swang", "outcome.died".
 
 ```{r}
-rhc.small<- rhc
-rhc.small[ , c("ARF", "CHF", "Cirrhosis", "Colon_Cancer", "Coma", "COPD", "Lung_Cancer", "MOSF_Malignancy", "MOSF_Sepsis", "cardiohx", "chfhx", "dementhx", "psychhx",  "chrpulhx", "renalhx", "liverhx",  "gibledhx", "malighx",  "immunhx",  "transhx",  "amihx", "age", "female", "edu", "das2d3pc", "aps1", "scoma1", "meanbp1", "wblc1", "hrt1", "resp1", "temp1", "pafi1", "alb1", "hema1", "bili1", "crea1", "sod1", "pot1", "paco21", "ph1", "wtkilo1", "dnr1", "resp", "card", "neuro", "gastr", "renal", "meta", "hema", "seps", "trauma", "ortho", "adld3p", "urin1", "treatment.swang", "outcome.died")]
+print('We already added the "female" column here instead of later. This way we didnt have to alter the original rhc data and also didnt have to import the "sex" column into rhc.small')
+rhc.small <- rhc
+rhc.small$female <- as.numeric(rhc.small$sex=='Female')
+rhc.small <- rhc.small[,c("ARF", "CHF", "Cirrhosis", "Colon_Cancer", "Coma", "COPD", "Lung_Cancer", "MOSF_Malignancy", "MOSF_Sepsis", "cardiohx", "chfhx", "dementhx", "psychhx",  "chrpulhx", "renalhx", "liverhx",  "gibledhx", "malighx",  "immunhx",  "transhx",  "amihx", "age", "female", "edu", "das2d3pc", "aps1", "scoma1", "meanbp1", "wblc1", "hrt1", "resp1", "temp1", "pafi1", "alb1", "hema1", "bili1", "crea1", "sod1", "pot1",     "paco21", "ph1", "wtkilo1", "dnr1", "resp", "card", "neuro", "gastr",  "renal", "meta", "hema", "seps", "trauma",  "ortho", "adld3p", "urin1", "treatment.swang", "outcome.died")]
 
 ```
 
@@ -147,8 +150,10 @@ str(rhc.small)
 If you have "labelled" variables like labelled int and labelled num it means that the datset was imported from SPSS. In such case change such variables into numeric variables. If you do not see such variables then skip this step.
 
 ```{r}
-rhc.small$age <- as.numeric(rhc.small$age) # only if in your version of the data "age" was a "labelled" variable
+print("We do not have labelled variables, so we can skip this step.")
+#rhc.small$age <- as.numeric(rhc.small$age) # only if in your version of the data "age" was a "labelled" variable
 print("===================================================")
+
 # => Change all labelled variables that include numbers (integer or numeric) into numeric.
 # print("===================================================")
 ```
@@ -156,10 +161,15 @@ print("===================================================")
 For each  categorical variable with 2 values (such as sex) change it into a numeric variable by selecting one of the values value (such as "female") to be 1 and the other zero.
 
 ```{r}
-rhc.small$female <- as.numeric(rhc.small$sex=='Female')
+
+## rhc.small$female <- as.numeric(rhc.small$sex=='Female')
 print("===================================================")
+print("We already created the female column earlier because we were required to put it into rhc.small")
+#rhc.small$resp<-ifelse(df1$resp=="Yes",1,0)
+rhc.small$resp <- as.numeric(rhc.small$resp=='Yes')
+
 # => Change any factor with two values into a 0/1 variable by selecting a value (such as "female" above) to be 1 and the other value will be zero.
-# print("===================================================")
+print("===================================================")
 ```
 Before we start the analysis we need to be aware of the following issue: If you encounter a variable with missing values then you might run into a problem with the Match() function later on. For this exercise you can follow this advice:
 
@@ -170,7 +180,20 @@ Before we start the analysis we need to be aware of the following issue: If you 
 => Inspect the proportion of missing values for each variable and follow the advice above.
 ```{r}
 print("===================================================")
+missing <- colMeans(is.na(rhc.small))*100 ##check percentage of NA per column
+print(missing)
+exclude <- vector(mode = "list", length = 0)
+for(colname in names(missing)){
+  if(missing[[colname]] > 15){ ## if more than 15% of data is missing:
+    cat(missing[[colname]], colname, '\n')
+    exclude <- append(exclude, colname) ## contains "adld3p" and "urin1"
+  }
+}
+print('Columns to be removed:')
+print(exclude)
+rhc.small <- rhc.small[, !colnames(rhc.small) %in% exclude]
 
+print("There are no other columns which have any NA's, so step 2 about imputing doesn't apply")
 print("===================================================")
 ```
 
@@ -185,11 +208,26 @@ The truth is that the best way to select these variables is to use clinical know
 ```{r}
 print("===================================================")
 # => Fit logistic regression models for each variable separately with the outcome and retain those with an association having a p-value of ≤ 0.1. Tip: you may want to automate the whole process!
+xvars <- vector(mode = "list", length = 0)
+
+for(i in seq_along(rhc.small)){
+  if(names(rhc.small[i]) == 'treatment.swang' || names(rhc.small[i]) == 'outcome.died'){
+    next
+  }
+  mod <- as.formula(sprintf("outcome.died ~ %s", names(rhc.small[i])))
+  model <- glm(formula = mod, family = binomial, data = rhc.small)
+  pValue <- coef(summary(model))[,'Pr(>|z|)']
+  pValue <- pValue[2]
+  if(pValue <= 0.1){
+    xvars <- append(xvars, names(rhc.small[i]))
+  }
+}
 
 # => Put the names of the selected variables (without the treatment and outcome variables) in the variable xvars by writing xvars <- c("ARF", ...) or do it automatically as described in the tip.
-# => Print xvar
 
 # => Put these selected variables in a data.frame called rhc.selected that also includes the treatment and outcome variables to this data frame.
+idx <- match(xvars, names(rhc.small))
+rhc.selected <- rhc.small[,idx] 
 # print("===================================================")
 ```
 
