@@ -316,10 +316,7 @@ matched <- rhc.selected[unlist(greedymatch[c("index.treated","index.control")]),
 matched[1,]  # This is the first treated subject
 print("===================================================")
 matched[length(greedymatch$index.treated)+1,] # => What do you think this subject is?
-print("untreated. the index = length gives us the last treated person in the list, when our index exceeds the list length it continues with the people where treated = 0") ## I am 99.9% sure of this but Rstudio is a bitch so it's hard to check
-
-################### CHECK AGAin (comment) #################
-
+print("untreated. the index = length gives us the last treated person in the list, when our index exceeds the list length it continues with the people where treated = 0") 
 print("===================================================")
 ```
 
@@ -345,8 +342,6 @@ print("===================================================")
 y_trt <- matched$outcome.died[matched$treatment==1]
 # Put here the vector of outcomes y (from matched$outcome.died) of those in the control group
 y_con <- matched$outcome.died[matched$treatment==0]
-#print(y_con)
-#print(y_trt)
 print("===================================================")
 ```
 
@@ -371,7 +366,8 @@ table(y_trt,y_con)
 
 # Enter these a, b, c, and d numbers in the following McNemar test
 # print("===================================================")
-mcnemar.test(matrix(c(955,531,336,362 ),2,2)) # => Complete the command by filling the a, b, c, and d numbers in the correct order.
+mcnemar.test(matrix(c(362,336,531,955 ),2,2)) # => Complete the command by filling the a, b, c, and d numbers in the correct order.
+
 # => Is the p-value less than 0.05? What does this result mean?
 print("The p-value is below 0.05. This means we reject H0, the treatment did have an effect")
 # print("===================================================")
@@ -397,8 +393,6 @@ print("A negative coefficient implies that the odds ratio is below 1, in this co
 
 
 ```{r}
-
-
 # The great thing about modelling is that we can now again adjust for the variables with the worst SMD. Adjust for the variable with the worst SMD that you encountered before. To adjust you just add the name of the variable in the logistic regression formula. => Complete the command
 gmodel2 <- glm(outcome.died ~ treatment.swang + aps1, family=binomial, data=matched)
 exp(coef(gmodel2))
@@ -415,14 +409,15 @@ Fit a propensity score model to predict treatment. Use logistic regression with 
 print("===================================================")
 # => Use the variables we found before in xvars in the first assignment to predict treatment
 form <- reformulate(xvars, response = "treatment.swang")
-psmodel <- glm(formula=form , family=binomial, data=matched)  
+psmodel <- glm(formula=form , family=binomial, data=rhc.selected)  
 print("===================================================")
 summary(psmodel)   # show coefficients etc
-pscore<-psmodel$fitted.values # create propensity score
+pscore <- psmodel$fitted.values # create propensity score
+#print(pscore)
 
 prs_df <- data.frame(pr_score = predict(psmodel, type = "response"),
                      treatment = psmodel$model$treatment.swang)
-tail(prs_df)
+#tail(prs_df)
 ```
 
 # lets check the overlap between the propensity scores for the two groups.
@@ -473,10 +468,11 @@ Now we want to use Match() with rhc.selected$treatment.swang as treatement, with
 ```{r}
 print("===================================================")
 # => complete the command
-mydata <- prs_df
-treatment <- rhc.selected$treatment.swang==1
-psmatch <- Match(Tr=mydata$treatment, M=1, X=logit(pscore), replace=FALSE, caliper = .2) 
-matched <- mydata[unlist(psmatch[c("index.treated","index.control")]), ]
+#mydata <- rhc.selected
+##mydata$treatment <- matched$treatment.swang==1
+#psmatch <- Match(Tr=mydata$treatment, M=1, X=logit(pscore), replace=FALSE, caliper = .2) 
+psmatch <- Match(Tr=rhc.selected$treatment.swang, M=1, X=logit(pscore), replace=FALSE, caliper = .2) 
+matched <- rhc.selected[unlist(psmatch[c("index.treated","index.control")]), ]
 print("===================================================")
 ```
 
@@ -486,6 +482,7 @@ print("===================================================")
 ```{r}
 print("===================================================")
 # => Complete the command
+print(xvars)
 matchedtab1 <- CreateTableOne(vars=xvars, strata = "treatment.swang", 
                             data=matched, test = FALSE) 
 # => print the matching table showing the SMD
@@ -528,7 +525,7 @@ table(y_trt.ps,y_con.ps)  #added to visualize the 2x2 table
 ```{r}
 print("===================================================")
 # => Complete the command
-mcnemar.test(matrix(c(362,336,531,955),2,2)) 
+mcnemar.test(matrix(c(955,531,336,362 ),2,2)) 
 # => Is the p-value less than 0.05? What does this result mean?
 print("The p-value is 4.44e-11 so less than 0.05.")               ################### CHECK AGAIN #################
 # => Compare the difference in the means before and after matching.
@@ -544,7 +541,7 @@ summary(gmodel3)
 exp(coef(gmodel3))   
 print("===================================================")
 # => What is the odds ratio of treatment?
-print("The odds ratio of treatment is 1.47")                ################### CHECK AGAIN, same as 1st #################
+print("The odds ratio of treatment is 1.27")                ################### CHECK AGAIN, same as 1st #################
 ```
 
 
@@ -553,7 +550,7 @@ print("The odds ratio of treatment is 1.47")                ################### 
 gmodel3 <- glm(outcome.died ~ treatment.swang + aps1, family="binomial", data = matched)
 exp(coef(gmodel3))
 # => What is the odds ratio of treatment now?
-print("The odds ratio of treatment is now ~ 1.25")              ################### CHECK AGAIN, same as 1st ###############
+print("The odds ratio of treatment is now ~ 1.29")              ################### CHECK AGAIN, same as 1st ###############
 print("===================================================")
 ```
 
