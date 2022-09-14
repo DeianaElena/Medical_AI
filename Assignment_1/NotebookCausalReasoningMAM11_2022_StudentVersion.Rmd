@@ -446,7 +446,7 @@ We want to do greedy matching on PS using Match with a caliper. Note that instea
 print("===================================================")
 # => Complete this function to calculate the log odds
 logit <- function(p) {
-  return(log(p(1-p)))
+  return(log(p/(1-p)))
   } 
 print("===================================================")
 ```
@@ -528,7 +528,7 @@ table(y_trt.ps,y_con.ps)  #added to visualize the 2x2 table
 ```{r}
 print("===================================================")
 # => Complete the command
-mcnemar.test(matrix(c(955,531,336,362 ),,2,2)) 
+mcnemar.test(matrix(c(362,336,531,955),2,2)) 
 # => Is the p-value less than 0.05? What does this result mean?
 print("The p-value is 4.44e-11 so less than 0.05.")               ################### CHECK AGAIN #################
 # => Compare the difference in the means before and after matching.
