@@ -457,7 +457,7 @@ logitNoTreatment <- logit(gotNoTreatment)
 par(mfrow=c(2,1))
 hist(logitTreatment, ylim=c(0,650), col='darkblue')
 hist(logitNoTreatment, ylim=c(650,0), col='red')
-print("I don't know if this is the correct way to do it.")     ################### CHECK AGAIN #################
+print("There is partial overlap.")     ################### CHECK AGAIN x axes #################
 
 print("===================================================")
 ```
@@ -490,7 +490,6 @@ print(matchedtab1, smd = TRUE)
 
 # => Are there any variables with bad balance now?
 addmargins(table(ExtractSmd(matchedtab1) > 0.2))
-print("There are still 3 variables with bad balance: aps1, meanbp1 , crea1.")
 print("===================================================")
 ```
 
@@ -560,8 +559,85 @@ Instead of the glm to calculate the propensity score use any machine learning te
 ```{r}
 #1. calculate the propensity score use any machine learning technique
 
-#2. Compare the results to those you obtained by matching
+# install.packages("MatchIt")          #install package if need it
+# #install.packages("rpart.plot")       #install package if need it
+# install.packages('randomForest')      #install package if need it
 
-#3. Which approach do you prefer and why?
+#We chose Random Forest since tree based methods have a better ability to detect non-linearity.
+library(randomForest)
+set.seed(14)
+
+rhc.rf <- rhc.selected
+rhc.rf$treatment.swang <- as.factor(rhc.rf$treatment.swang)
+rfFormula <- reformulate(xvars, response = "treatment.swang")
+RFmodel <- randomForest(formula = rfFormula, data=rhc.rf, ntree=500, max_depth=1000)
+forestScores <- predict(RFmodel, type="prob")
+#summary(RFmodel)
+```
+
+```{r}
+pscoreRF <- data.frame(forestScores[,2])
+comparisonDF <- data.frame("RandomForest"= forestScores[,2], "Treatment" = rhc.selected$treatment.swang)
+```
+
+```{r}
+#Checking the overlap between the propensity scores for the two groups
+
+gotTreatment2 <- comparisonDF$RandomForest[comparisonDF$Treatment==1]
+gotNoTreatment2 <- comparisonDF$RandomForest[comparisonDF$Treatment==0]
+par(mfrow=c(2,1))
+hist(gotTreatment2, ylim=c(0,650), col='darkblue')
+hist(gotNoTreatment2, ylim=c(650,0), col='red')
+```
+```{r}
+pscoreRF_v <- c(pscoreRF[,1])   #creating a vector
+```
+
+
+```{r}
+#matching ps 
+psmatch2 <- Match(Tr=rhc.selected$treatment.swang, M=1, X=logit(pscoreRF_v), replace=FALSE, caliper = .2) 
+matched2 <- rhc.selected[unlist(psmatch[c("index.treated","index.control")]), ]
+```
+
+```{r}
+matchedtab2 <- CreateTableOne(vars=xvars, strata = "treatment.swang", 
+                            data=matched2, test = FALSE) 
+# => print the matching table showing the SMD
+print(matchedtab2, smd = TRUE)
+
+# => Are there any variables with bad balance now?
+addmargins(table(ExtractSmd(matchedtab2) > 0.2))
+```
+
+
+
+```{r}
+#############################################################################################
+#2. Compare the results to those previously obtained by matching
+
+#comparing data from nearest neighbor matching with previous data
+
+
 
 ```
+
+
+```{r}
+#3. Which approach do you prefer and why?
+
+
+#Anwer also taking into account what written here:
+
+''' The estimation of propensity scores could be done using:
+Statistical models: logistic regression, probit regression
+Mostly widely used
+Relay on functional form assumption
+
+Machine learning algorithms: classification trees, boosting, bagging, random forests
+Do not rely on functional form assumptions
+It is not clear whether these methods on average better than binomial models'''
+
+```
+
+
