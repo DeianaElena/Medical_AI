@@ -20,6 +20,8 @@ Packages: install packages if needed
 # install.packages("Matching")
 # install.packages("tidyverse") #added
 # install.packages('rlang')     #added
+# install.packages('Metrics')   #added
+# install.packages('ggplot2')   #added
 
 # Recommended: add "dplyr" if you have used it before to make efficient preprocessing.
 ```
@@ -30,6 +32,8 @@ Packages: install packages if needed
 library(tableone) # This library allows us to calculate summary statistics about the variables including the SMD (standardized mean difference).
 library(Matching) # This library will do the matching
 library('dplyr')  #added
+library(Metrics)  #added
+library(ggplot2)  #added
 ```
 
 ## Read database
@@ -120,7 +124,6 @@ print("===================================================")
 cat1_list <- list(levels(rhc$cat1))
 print(cat1_list)
 
-# ------- solution to be optimized later on ---------     ################### CHECK IT LATER ########################
 rhc$CHF <- as.numeric(rhc$cat1=='CHF')
 rhc$Cirrhosis <- as.numeric(rhc$cat1=='Cirrhosis')
 rhc$Colon_Cancer <- as.numeric(rhc$cat1=='Colon Cancer')
@@ -318,6 +321,12 @@ print("===================================================")
 =\> Are all treated subjects matched to a control one?
 
 ```{r}
+length(greedymatch$index.treated)
+length(greedymatch$index.control)
+print("Yes, when checking their length we can see that treated group matched the control ones.")
+```
+
+```{r}
 matched <- rhc.selected[unlist(greedymatch[c("index.treated","index.control")]), ]
 matched[1,]  # This is the first treated subject
 print("===================================================")
@@ -396,7 +405,6 @@ print("the odds ratio associated with treatment, calculated by exp(coefficient),
 print("A positive coefficient implies that the odds ratio is above 1, in this context meaning treatment is associated with higher outcome of death.")
 # => If the coefficient is negative, what does that mean in terms of odds ratio?
 print("A negative coefficient implies that the odds ratio is below 1, in this context meaning treatment is associated with lower outcome of death.")
-## Does this make sense?                           
 
 ```
 
@@ -442,22 +450,20 @@ gotNoTreatment <- prs_df$pr_score[prs_df$treatment==0]
 
 #density hist
 par(mfrow=c(2,1))
-hist(gotTreatment, main='Treatment group', xlab='Propensity Score', ylim=c(0,2), col='darkblue', 
+hist(gotTreatment, main='Treatment group', xlab='Propensity Score', ylim=c(0,3), col='darkblue', 
      prob = TRUE)   #shows density instead of frequency
 lines(density(gotTreatment),
       lwd = 2,
       col = "orange")
 
-hist(gotNoTreatment, main='Control group', xlab='Propensity Score', ylim=c(4,0), col='red', 
+hist(gotNoTreatment, main='Control group', xlab='Propensity Score', ylim=c(3,0), col='red', 
      prob = TRUE)   #shows density instead of frequency
 lines(density(gotNoTreatment),
       lwd = 2,
       col = "orange")
 
 # => What do you think about the overlap? 
-print("This overlap is almost everywhere. Although there is poor overlap on the high propensity score (right tail), the positivity assumption is still reasonable.")   
-
-################### CHECK   AGAIN ?????????? #################
+print("This overlap is almost everywhere. Although there is little overlap on the high propensity score, the positivity assumption is still reasonable because control group always have a chance of getting treatment.")   
 
 print("===================================================")
 ```
@@ -502,11 +508,7 @@ lines(density(logitNoTreatment),
 
 
 #What do you think about the overlap?
-print("There is good overlap almost everywhere so the positivity assumption is reasonable.")     
-
-
-################### CHECK AGAIN #################
- 
+print("There is better overlap compared to the previous plot, therefore the positivity assumption is still reasonable.")     
 print("===================================================")
 ```
 
@@ -573,9 +575,7 @@ mcnemar.test(matrix(c(955,531,336,362 ),2,2))
 # => Is the p-value less than 0.05? What does this result mean?
 print("The p-value is 4.44e-11 so less than 0.05.")               
 # => Compare the difference in the means before and after matching.
-print("The means before matching was 0.0893, While after it is 0.0623, so it is now different and smaller. ")          
-
-################### CHECK THIS, not sure if we should add something else #################
+print("The means before matching was 0.0893, While after it is 0.0588, therefore it is now different. This means that there is a smaller difference in the outcome from treated and control group.")          
 
 print("===================================================")
 ```
@@ -588,7 +588,7 @@ summary(gmodel3)
 exp(coef(gmodel3))   
 print("===================================================")
 # => What is the odds ratio of treatment?
-print("The odds ratio of treatment is 1.296")          ################### CHECK THIS #################        
+print("The odds ratio of treatment is 1.296")              
 ```
 
 ```{r}
@@ -596,7 +596,7 @@ print("The odds ratio of treatment is 1.296")          ################### CHECK
 gmodel3 <- glm(outcome.died ~ treatment.swang + aps1, family="binomial", data = matched)
 exp(coef(gmodel3))
 # => What is the odds ratio of treatment now?
-print("The odds ratio of treatment is now 1.312.")        ######### CHECK THIS #################      
+print("The odds ratio of treatment is now 1.312.")            
 print("===================================================")
 ```
 
@@ -648,14 +648,10 @@ lines(density(gotNoTreatment2),
       col = "orange")
 
 ```
+
 ```{r}
 logitTreatment2 <- logit(gotTreatment2)
 logitNoTreatment2 <- logit(gotNoTreatment2)
-
-#frequency hist
-# par(mfrow=c(2,1))
-# hist(logitTreatment, main='Group with treatment', xlab='Log-odds of Propensity Score', xlim=c(-5,5), ylim=c(0,650), col='darkblue')
-# hist(logitNoTreatment, main='Group without treatment', xlab='Log-odds of Propensity Score', xlim=c(-5,5),ylim=c(650,0), col='red')
 
 #density hist
 par(mfrow=c(2,1))
@@ -672,7 +668,6 @@ lines(density(logitNoTreatment2),
       col = "orange")
 ```
 
-
 ```{r}
 pscoreRF_v <- c(pscoreRF[,1])   #creating a vector of the PS
 ```
@@ -680,7 +675,7 @@ pscoreRF_v <- c(pscoreRF[,1])   #creating a vector of the PS
 ```{r}
 #matching PS 
 psmatch2 <- Match(Tr=rhc.selected$treatment.swang, M=1, X=logit(pscoreRF_v), replace=FALSE, caliper = .2) 
-matched2 <- rhc.selected[unlist(psmatch[c("index.treated","index.control")]), ]
+matched2 <- rhc.selected[unlist(psmatch2[c("index.treated","index.control")]), ]
 ```
 
 ```{r}
@@ -694,28 +689,43 @@ addmargins(table(ExtractSmd(matchedtab2) > 0.2))
 print('There are no variables with bad balance (SMD>0.2).')
 ```
 
-
 ```{r}
 #2. Compare the results to those previously obtained by matching (via the Mahalanobis distance and the propensity score with logistic regression).
+```
 
-print('When comparing the results obtain previously with the one with a random forest method, we can see that we obtain poor overlap for high propensity scores where we only have subjects without treatment.')
+```{r}
+#calculating mean absolute error between two models
 
+pscoreRF_v <- c(pscoreRF[,1])      ## creating a vector of the PS
+predictedRF <- round(pscoreRF_v)   ## predicted values of random forest, propensity score
+predictedPS <- round(prs_df$pr_score)
+observed <- as.numeric(rhc$swang1=='RHC')
+maeRF <- mae(predictedRF, observed)
+maePS <- mae(predictedPS, observed)
+barplot(c(maeRF, maePS), main="Mean Absolute Error",
+   ylim=c(0.2,0.31), names=c('Random Forest method', 'Propensity score method'), col=c('green', 'yellow'))
 
-######### CHECK THIS perhaps we can use MAE? ################# 
+```
 
+```{r}
+smd_dataPlot <- data.frame(variable   = rownames(ExtractSmd(matchedtab1)),
+                       LR  = as.numeric(ExtractSmd(matchedtab1)),
+                       RF    = as.numeric(ExtractSmd(matchedtab2)))
+print(smd_dataPlot)
+```
+
+```{r}
+print("When comparing the methods (PS method and RF), we can see from Mean Absolute error graph that we get a slightly lower value for Random Forest method. Additionally, when comparing their histograms of propensity score, we noticed a general good overlap with higher density for LR method and, on the other hand, less overlap for high propensity scores when using RF method. Finally, when checking the SMD table from both LR and RF, we noticed that LR has lower SMD so less risk to have 'bad' balance.")
 
 ```
 
 ```{r}
 #3. Which approach do you prefer and why?
 
-print("We prefer the approach that uses logistic regression for different reasons:
-      1. It relays on functional form assumption;
-      2. We got better results in terms of propensity score;
-      3. It is easier to implement therefore more used so more documentation and explanation can be found.")         
-
-
-######### CHECK THIS ################# 
+print("Although we got better MAE on random forest, we prefer the approach that uses logistic regression for different reasons:
+      1. We got slightly better results;
+      2. It seems easier to implement; 
+      3. It is more popular therefore more documentation and explanation can be found.")         
 
 
 ```
