@@ -5,18 +5,16 @@ output: html_notebook
 
 In this assignment we will exercise causal inference on the RHC (Right Heart Catheterization) dataset This dataset was used in Connors et al. (1996): The effectiveness of RHC in the initial care of critically ill patients. J American Medical Association 276:889-897. The dataset pertains to day 1 of hospitalization, i.e., the "treatment" variable swang1 is whether or not a patient received a RHC (also called the Swan-Ganz catheter) on the first day in which the patient qualified for a specific research study called SUPPORT.
 
-What should you submit? You need to submit:
-1. This Notebook (in .Rmd format) after filling in all your answers inside this notebook. You are required to do an action (write or fill-in code or write documentation) at the places marked by an arrow (=>). This arrow appears within the comments (and it will be preceeded by "#") or outside the comments in the text (without "#").
-2. The Notebook in html format with all the results.
+What should you submit? You need to submit: 1. This Notebook (in .Rmd format) after filling in all your answers inside this notebook. You are required to do an action (write or fill-in code or write documentation) at the places marked by an arrow (=\>). This arrow appears within the comments (and it will be preceeded by "\#") or outside the comments in the text (without "\#"). 2. The Notebook in html format with all the results.
 
-==> Student names: Elena Deiana, Ramon Cremers
-==> Student numbers: 14110822, 14090945
-# Open part
+==\> Student names: Elena Deiana, Ramon Cremers ==\> Student numbers: 14110822, 14090945 \# Open part
 
 ## Understand the datase:
-Please Open https://hbiostat.org/data/repo/rhc.html and take a good look at the variables. Make sure you inspect the variables included in the dataset (they appear in a table below the text on the website). You can refer to the table whenever needed. 
+
+Please Open <https://hbiostat.org/data/repo/rhc.html> and take a good look at the variables. Make sure you inspect the variables included in the dataset (they appear in a table below the text on the website). You can refer to the table whenever needed.
 
 Packages: install packages if needed
+
 ```{r}
 # install.packages("tableone")
 # install.packages("Matching")
@@ -27,6 +25,7 @@ Packages: install packages if needed
 ```
 
 ## Load packages
+
 ```{r}
 library(tableone) # This library allows us to calculate summary statistics about the variables including the SMD (standardized mean difference).
 library(Matching) # This library will do the matching
@@ -34,15 +33,17 @@ library('dplyr')  #added
 ```
 
 ## Read database
+
 ```{r}
 # Download rhc dataset from CANVAS and read it
 rhc <- read.csv("rhc.csv")
+set.seed(14)
 ```
 
+## Understanding the dataset
 
-
-## Understanding the dataset  
 Tip: Look at the data, use the "View" command on the dataset "rhc"
+
 ```{r}
 print("===================================================")
 # => how many rows does rhc contain?
@@ -55,13 +56,14 @@ names(rhc)
 print("===================================================")
 ```
 
-
 For the assignment the TREATMENT variable is swang1 and the OUTCOME variable is death.
 
 ## Preprocess
+
 If you look at the values of the dichotomous variables you will see that they are factors (in other words, categorical variables). We would like to work with numeric variables in this exercise so we need to perform some conversions.
 
 Let's start with the treatment and outcome variables. Create an "outcome.died" and "swang.treatment" variables with the numeric values 0 and 1.
+
 ```{r}
 rhc$outcome.died <- as.numeric(rhc$death=='Yes')  # Again you might want, instead, to do all preprocessing with dplyr if you prefer
 rhc$treatment.swang <- as.numeric(rhc$swang1=='RHC')
@@ -70,6 +72,7 @@ rhc$treatment.swang <- as.numeric(rhc$swang1=='RHC')
 ### Check
 
 Let's take a quick look into the dataset using these variables
+
 ```{r}
 print("===================================================")
 # => What is the mean of outcome.died in the whole data set?
@@ -96,8 +99,8 @@ sprintf('Mean mortality for not treated: %s', m3)
 print("===================================================")
 ```
 
-
 The variable cat1 is a factor (categorical variable) containing the primary disease category for the patient.
+
 ```{r}
 print("===================================================")
 # => How many different categories are in Cat1? Tip: use the levels() function on this variable.
@@ -108,7 +111,7 @@ sprintf("The number of categories in 'cat1' is %s.", ncat)
 print("===================================================")
 ```
 
-We would like to "translate" Cat1 into a set of variables each with the numeric values of 0/1. For example for the value of "ARF" we will create a variable "ARF" that will be 1 if rhc$cat1=='ARF'.
+We would like to "translate" Cat1 into a set of variables each with the numeric values of 0/1. For example for the value of "ARF" we will create a variable "ARF" that will be 1 if rhc\$cat1=='ARF'.
 
 ```{r}
 rhc$ARF <- as.numeric(rhc$cat1=='ARF')
@@ -132,9 +135,8 @@ print("===================================================")
 
 ## Create data frame with variables of interest
 
-==> Create a data frame and call it rhc.small with the following variables of interest:
-All the underlying categories of "cat1" (ARF etc) that you created before,   "cardiohx", "chfhx", "dementhx", "psychhx",  "chrpulhx", "renalhx", "liverhx",  "gibledhx", "malighx",  "immunhx",  "transhx",  "amihx", "age",     
-"female", "edu", "das2d3pc", "aps1", "scoma1", "meanbp1", wblc1", "hrt1",     "resp1", "temp1", "pafi1", "alb1", "hema1", "bili1", "crea1", "sod1", "pot1",     "paco21", "ph1", "wtkilo1", "dnr1", "resp", "card", "neuro", "gastr",  "renal", "meta", "hema", "seps", "trauma",  "ortho", "adld3p", "urin1", "treatment.swang", "outcome.died".
+==\> Create a data frame and call it rhc.small with the following variables of interest: All the underlying categories of "cat1" (ARF etc) that you created before, "cardiohx", "chfhx", "dementhx", "psychhx", "chrpulhx", "renalhx", "liverhx", "gibledhx", "malighx", "immunhx", "transhx", "amihx", "age",\
+"female", "edu", "das2d3pc", "aps1", "scoma1", "meanbp1", wblc1", "hrt1", "resp1", "temp1", "pafi1", "alb1", "hema1", "bili1", "crea1", "sod1", "pot1", "paco21", "ph1", "wtkilo1", "dnr1", "resp", "card", "neuro", "gastr", "renal", "meta", "hema", "seps", "trauma", "ortho", "adld3p", "urin1", "treatment.swang", "outcome.died".
 
 ```{r}
 print("===================================================")
@@ -148,6 +150,7 @@ print("===================================================")
 Make sure you take a look at the definition of variables (on the URL given above) with unclear names to you. This data frame includes now all candidate variables from which we will select later for matching. However, before we jump into variable selection let us continue data class conversion.
 
 Check classes of these variables by using the str command
+
 ```{r}
 str(rhc.small)   #to check classes of all variables
 ```
@@ -162,7 +165,7 @@ print("We have not labelled variables, so we can skip this step.")
 print("===================================================")
 ```
 
-For each  categorical variable with 2 values (such as sex) change it into a numeric variable by selecting one of the values value (such as "female") to be 1 and the other zero.
+For each categorical variable with 2 values (such as sex) change it into a numeric variable by selecting one of the values value (such as "female") to be 1 and the other zero.
 
 ```{r}
 
@@ -185,13 +188,15 @@ rhc.small$dnr1 <- as.numeric(rhc.small$dnr1=='Yes')
 # => Change any factor with two values into a 0/1 variable by selecting a value (such as "female" above) to be 1 and the other value will be zero.
 print("===================================================")
 ```
+
 Before we start the analysis we need to be aware of the following issue: If you encounter a variable with missing values then you might run into a problem with the Match() function later on. For this exercise you can follow this advice:
 
-1) If the proportion of missing is above 15% then just exclude the whole variable from the data frame and hence from the analysis, it is likely that the information it had still resides in the combination of the many other variables.
+1)  If the proportion of missing is above 15% then just exclude the whole variable from the data frame and hence from the analysis, it is likely that the information it had still resides in the combination of the many other variables.
 
-2) If you have less than 15% missing variables try to impute the values of the variable. In the extreme case you could apply multiple imputations and repeat the analysis on each imputation set and then pool the results. However for this exercise you can follow a simple strategy such as imputing the value with mean/median/mode. This would be a limitation but imputing missing values is not the focus of our exercise on causal inference.
+2)  If you have less than 15% missing variables try to impute the values of the variable. In the extreme case you could apply multiple imputations and repeat the analysis on each imputation set and then pool the results. However for this exercise you can follow a simple strategy such as imputing the value with mean/median/mode. This would be a limitation but imputing missing values is not the focus of our exercise on causal inference.
 
-=> Inspect the proportion of missing values for each variable and follow the advice above.
+=\> Inspect the proportion of missing values for each variable and follow the advice above.
+
 ```{r}
 print("===================================================")
 missing <- colMeans(is.na(rhc.small))*100 ##check percentage of NA per column
@@ -217,7 +222,7 @@ Now we are ready to start the analysis.
 
 According to the disjunctive cause criterion we want to find variables (to control for) that are predictive of treatment and/or the outcome. In this assignment we will use the criterion to select all (pre-treatment) variables that are predictive of the outcome. This will include true confounders (that also affect the treatment, and risk factors that only affect the outcome). All our variables in rhc.small, except the outcome of course, are pre-treatment variables (none is measured AFTER the intervention) so they are all good candidates for the selection.
 
-The truth is that the best way to select these variables is to use clinical knowledge. However, in this assignment we will do this in a data-driven and practical way. Specifically, we will operationalize "predictive of the outcome" as the following criterion: a variable is predictive of the outcome if its univariate association with the outcome is significant at the 0.1 level. Because our outcome is binary we can translate this criterion to: For every candidate variable in rhc.small fit a logistic regression model to predict outcome (outcome.died) using only the candidate variable as a predictor and retain the variable if the p-value of its association with the outcome is ≤ 0.1, and otherwise discard the variable. Note: Do not include the treatment in the selection. 
+The truth is that the best way to select these variables is to use clinical knowledge. However, in this assignment we will do this in a data-driven and practical way. Specifically, we will operationalize "predictive of the outcome" as the following criterion: a variable is predictive of the outcome if its univariate association with the outcome is significant at the 0.1 level. Because our outcome is binary we can translate this criterion to: For every candidate variable in rhc.small fit a logistic regression model to predict outcome (outcome.died) using only the candidate variable as a predictor and retain the variable if the p-value of its association with the outcome is ≤ 0.1, and otherwise discard the variable. Note: Do not include the treatment in the selection.
 
 ```{r}
 print("===================================================")
@@ -246,7 +251,6 @@ rhc.selected$treatment.swang <- rhc.small$treatment.swang   #adding treatment va
 rhc.selected$outcome.died <- rhc.small$outcome.died         #adding outcome variables
 print("===================================================")
 ```
-
 
 ## Inspect balance before matching
 
@@ -278,9 +282,10 @@ df_smd$variable[df_smd$Unmatched>0.2]
 print("===================================================")
 ```
 
-
 ## Greedy matching on Mahalanobis distance
+
 Let us now do matching in the hope that the balance will get better so we can have a more valid inference.
+
 ```{r}
 print("===================================================")
 # We want to match the treated with the untreated subjects. Find 1 on 1 match.
@@ -297,7 +302,6 @@ rhc.selected[xvars]
 print("===================================================")
 ```
 
-
 ```{r}
 ?Match #useful to read the documentation for Match()
 ```
@@ -311,8 +315,7 @@ print('This is who are the controls and their ID variable.')
 print("===================================================")
 ```
 
-
-=> Are all treated subjects matched to a control one?
+=\> Are all treated subjects matched to a control one?
 
 ```{r}
 matched <- rhc.selected[unlist(greedymatch[c("index.treated","index.control")]), ]
@@ -323,8 +326,8 @@ print("untreated. the index = length gives us the last treated person in the lis
 print("===================================================")
 ```
 
-
 Get table 1 for matched data with standardized differences
+
 ```{r}
 print("===================================================")
 # => Complete the command to create table 1 after matching
@@ -339,6 +342,7 @@ print("===================================================")
 ```
 
 ## Outcome analysis
+
 ```{r}
 print("===================================================")
 # => Put here the vector of outcomes y (from matched$outcome.died) of those in the treatment group
@@ -355,9 +359,10 @@ diffy <- y_trt-y_con # pairwise difference
 t.test(diffy)
 ```
 
-=> Look at the p-value. Is it below 0.05?
+=\> Look at the p-value. Is it below 0.05?
 
 ## We want to use the McNemar test, which is the best choice for paired (matched) binary data
+
 ```{r}
 print('The p-value is below 0.05.')
 table(y_trt,y_con)
@@ -377,6 +382,7 @@ print("The p-value is below 0.05. This means we reject H0, the treatment did hav
 ```
 
 ## The last way we want to analyse the outcome is with logistic regression
+
 ```{r}
 gmodel1 <- glm(outcome.died ~ treatment.swang, family=binomial, data=matched)
 summary(gmodel1)
@@ -394,7 +400,6 @@ print("A negative coefficient implies that the odds ratio is below 1, in this co
 
 ```
 
-
 ```{r}
 # The great thing about modelling is that we can now again adjust for the variables with the worst SMD. Adjust for the variable with the worst SMD that you encountered before. To adjust you just add the name of the variable in the logistic regression formula. => Complete the command
 gmodel2 <- glm(outcome.died ~ treatment.swang + aps1, family=binomial, data=matched)
@@ -404,10 +409,10 @@ print("When adjusting the variable 'aps1', the odds ratio of the treatment is 1.
 # print("===================================================")
 ```
 
-
 ## Propensity score matching
 
 Fit a propensity score model to predict treatment. Use logistic regression with glm
+
 ```{r}
 print("===================================================")
 # => Use the variables we found before in xvars in the first assignment to predict treatment
@@ -424,17 +429,36 @@ prs_df <- data.frame(pr_score = predict(psmodel, type = "response"),
 ```
 
 # lets check the overlap between the propensity scores for the two groups.
+
 ```{r}
 print("===================================================")
 #  => plot the density of the propensity scores of the treated and untreated. Tip: you might want to use par(mfrow=c(2,1)) to create 2 panels (2 rows, 1 column) and then plotting the first hist, with say, ylim=c(0,650) and col='darkblue', and the second histogram with ylim=c(650, 0) (note that we flipped the order) and col='red'. This will plot the blue histogram as a normal histogram and the red one will be plotted upside down underneath the blue one so you can easily see the overlap.
 
 gotTreatment <- prs_df$pr_score[prs_df$treatment==1]
 gotNoTreatment <- prs_df$pr_score[prs_df$treatment==0]
+
+# plot(density(gotTreatment))
+# plot(density(gotNoTreatment))
+
+#density hist
 par(mfrow=c(2,1))
-hist(gotTreatment, main='Population with treatment', xlab='Propensity Score', ylim=c(0,650), col='darkblue')
-hist(gotNoTreatment, main='Population without treatment', xlab='Propensity Score', ylim=c(650,0), col='red')
+hist(gotTreatment, main='Group with treatment', xlab='Propensity Score', ylim=c(0,2), col='darkblue', 
+     prob = TRUE)   #shows density instead of frequency
+lines(density(gotTreatment),
+      lwd = 2,
+      col = "orange")
+
+hist(gotNoTreatment, main='Group without treatment', xlab='Propensity Score', ylim=c(4,0), col='red', 
+     prob = TRUE)   #shows density instead of frequency
+lines(density(gotNoTreatment),
+      lwd = 2,
+      col = "orange")
+
 # => What do you think about the overlap? 
-print("This overlap is almost everywhere. This is expected, since we applied stratification methods.")   ################### CHECK   AGAIN ?????????? #################
+print("This overlap is almost everywhere. Although there is poor overlap on the right tail, the poritivity assumption is still reasonable.")   
+
+################### CHECK   AGAIN ?????????? #################
+
 print("===================================================")
 ```
 
@@ -457,20 +481,36 @@ print("===================================================")
 logitTreatment <- logit(gotTreatment)
 logitNoTreatment <- logit(gotNoTreatment)
 
+#frequency hist
+# par(mfrow=c(2,1))
+# hist(logitTreatment, main='Group with treatment', xlab='Log-odds of Propensity Score', xlim=c(-5,5), ylim=c(0,650), col='darkblue')
+# hist(logitNoTreatment, main='Group without treatment', xlab='Log-odds of Propensity Score', xlim=c(-5,5),ylim=c(650,0), col='red')
+
+#density hist
 par(mfrow=c(2,1))
-hist(logitTreatment, main='Population with treatment', xlab='Log-odds of Propensity Score', xlim=c(-5,5), ylim=c(0,650), col='darkblue')
-hist(logitNoTreatment, main='Population without treatment', xlab='Log-odds of Propensity Score', xlim=c(-5,5),ylim=c(650,0), col='red')
+hist(logitTreatment, main='Group with treatment', xlab='Log-odds of Propensity Score', xlim=c(-5,5), ylim=c(0,0.6), col='darkblue', 
+     prob = TRUE)   #shows density instead of frequency
+lines(density(logitTreatment),
+      lwd = 2,
+      col = "orange")
+
+hist(logitNoTreatment, main='Group without treatment', xlab='Log-odds of Propensity Score', xlim=c(-5,5),ylim=c(0.6,0), col='red', 
+     prob = TRUE)   #shows density instead of frequency
+lines(density(logitNoTreatment),
+      lwd = 2,
+      col = "orange")
+
+
 #What do you think about the overlap?
 print("There is good overlap almost everywhere so the positivity assumption is reasonable.")     
 
 
-################### CHECK AGAIN, shouldn't we have density instead of frequency? #################
+################### CHECK AGAIN #################
  
 print("===================================================")
 ```
 
-
-Now we want to use Match() with rhc.selected$treatment.swang as treatement, with 1 matched control per treated subject, with X as the logit(pscore), with no replacement and with a caliper of 0.2
+Now we want to use Match() with rhc.selected\$treatment.swang as treatement, with 1 matched control per treated subject, with X as the logit(pscore), with no replacement and with a caliper of 0.2
 
 ```{r}
 print("===================================================")
@@ -480,7 +520,6 @@ psmatch <- Match(Tr=rhc.selected$treatment.swang, M=1, X=logit(pscore), replace=
 matched <- rhc.selected[unlist(psmatch[c("index.treated","index.control")]), ]
 print("===================================================")
 ```
-
 
 ## Get standardized differences. Note: xvars is the same as in the first assignment.
 
@@ -499,6 +538,7 @@ print("===================================================")
 ```
 
 ## Outcome analysis after propensity score matching
+
 ```{r}
 print("===================================================")
 # => Put here the vector of outcomes y (from matched$outcome.died) of those in the treatment group
@@ -509,6 +549,7 @@ print("===================================================")
 ```
 
 Perform a t-test
+
 ```{r}
 # Perform paired t-test. Just to get a feeling of the result
 diffy.ps <- y_trt.ps - y_con.ps # pairwise difference
@@ -519,12 +560,11 @@ print('The test is significant since p-value=2.855e-11 so below 0.05.')
 print("===================================================")
 ```
 
-
 Use the McNemar test as before. Enter the a, b, c, and d numbers you get from the 2x2 table in the McNemar test
+
 ```{r}
 table(y_trt.ps,y_con.ps)  #added to visualize the 2x2 table
 ```
-
 
 ```{r}
 print("===================================================")
@@ -533,12 +573,15 @@ mcnemar.test(matrix(c(955,531,336,362 ),2,2))
 # => Is the p-value less than 0.05? What does this result mean?
 print("The p-value is 4.44e-11 so less than 0.05.")               
 # => Compare the difference in the means before and after matching.
-print("The difference in the means before and after ....")          ################### CHECK THIS #################
+print("The means before matching was 0.0893, While after it is 0.0623, so it is now different and smaller. ")          
+
+################### CHECK THIS, not sure if we should add something else #################
+
 print("===================================================")
 ```
 
-
 Use logistic regression
+
 ```{r}
 gmodel3 <- glm(outcome.died ~ treatment.swang, family="binomial", data = matched)
 summary(gmodel3)
@@ -547,7 +590,6 @@ print("===================================================")
 # => What is the odds ratio of treatment?
 print("The odds ratio of treatment is 1.315")          ################### CHECK THIS #################        
 ```
-
 
 ```{r}
 # => Now correct also for the least well balanced variable
@@ -558,15 +600,15 @@ print("The odds ratio of treatment is now 1.339.")        ######### CHECK THIS #
 print("===================================================")
 ```
 
-
 # Open part
+
 Instead of the glm to calculate the propensity score use any machine learning technique you like such as a regression tree (using rpart), or random forests (randomForest) in R to create the propensity score model and to predict the probabilities on such a model. Note that you might need to tweak the model parameters in order to improve it. Compare your results to those you obtained by matching (via the Mahalanobis distance and the propensity score with logistic regression). Which approach do you prefer and why?
+
 ```{r}
 #1. Propensity score using a different machine learning technique like Random Forest. 
 
 # install.packages('randomForest')      #install package if need it
 library(randomForest)
-set.seed(14)
 
 rhc.rf <- rhc.selected        #copying df to work on this
 rhc.rf$treatment.swang <- as.factor(rhc.rf$treatment.swang)
@@ -586,14 +628,30 @@ comparisonDF <- data.frame("RandomForest"= forestScores[,2], "Treatment" = rhc.s
 
 gotTreatment2 <- comparisonDF$RandomForest[comparisonDF$Treatment==1]
 gotNoTreatment2 <- comparisonDF$RandomForest[comparisonDF$Treatment==0]
+# par(mfrow=c(2,1))
+# hist(gotTreatment2, main='Group with treatment', xlab ='Propensity Score', ylim=c(0,650), col='darkblue')
+# hist(gotNoTreatment2, main='Group without treatment', xlab ='Propensity Score', ylim=c(650,0), col='red')
+
+
+#density hist
 par(mfrow=c(2,1))
-hist(gotTreatment2, main='Population with treatment', xlab ='Propensity Score', ylim=c(0,650), col='darkblue')
-hist(gotNoTreatment2, main='Population without treatment', xlab ='Propensity Score', ylim=c(650,0), col='red')
+hist(gotTreatment2, main='Group with treatment', xlab='Propensity Score', xlim=c(0,1), ylim=c(0,3), col='darkblue', 
+     prob = TRUE)   #shows density instead of frequency
+lines(density(gotTreatment2),
+      lwd = 2,
+      col = "orange")
+
+hist(gotNoTreatment2, main='Group without treatment', xlab='Propensity Score', xlim=c(0,1),ylim=c(3,0), col='red', 
+     prob = TRUE)   #shows density instead of frequency
+lines(density(gotNoTreatment2),
+      lwd = 2,
+      col = "orange")
+
 ```
+
 ```{r}
 pscoreRF_v <- c(pscoreRF[,1])   #creating a vector of the PS
 ```
-
 
 ```{r}
 #matching PS 
@@ -612,16 +670,16 @@ addmargins(table(ExtractSmd(matchedtab2) > 0.2))
 print('There are no variables with bad balance (SMD>0.2).')
 ```
 
-
-
 ```{r}
 #2. Compare the results to those previously obtained by matching (via the Mahalanobis distance and the propensity score with logistic regression).
 
+print('When comparing the results obtain previously with the one with a random forest method, we can see that we obtain poor overlap for high propensity scores and we only have subjects without treatment.')
 
+
+######### CHECK THIS ################# 
 
 
 ```
-
 
 ```{r}
 #3. Which approach do you prefer and why?
@@ -633,5 +691,3 @@ print("We prefer the approach that uses logistic regression for different reason
 
 
 ```
-
-
