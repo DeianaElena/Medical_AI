@@ -442,20 +442,20 @@ gotNoTreatment <- prs_df$pr_score[prs_df$treatment==0]
 
 #density hist
 par(mfrow=c(2,1))
-hist(gotTreatment, main='Group with treatment', xlab='Propensity Score', ylim=c(0,2), col='darkblue', 
+hist(gotTreatment, main='Treatment group', xlab='Propensity Score', ylim=c(0,2), col='darkblue', 
      prob = TRUE)   #shows density instead of frequency
 lines(density(gotTreatment),
       lwd = 2,
       col = "orange")
 
-hist(gotNoTreatment, main='Group without treatment', xlab='Propensity Score', ylim=c(4,0), col='red', 
+hist(gotNoTreatment, main='Control group', xlab='Propensity Score', ylim=c(4,0), col='red', 
      prob = TRUE)   #shows density instead of frequency
 lines(density(gotNoTreatment),
       lwd = 2,
       col = "orange")
 
 # => What do you think about the overlap? 
-print("This overlap is almost everywhere. Although there is poor overlap on the right tail, the poritivity assumption is still reasonable.")   
+print("This overlap is almost everywhere. Although there is poor overlap on the high propensity score (right tail), the positivity assumption is still reasonable.")   
 
 ################### CHECK   AGAIN ?????????? #################
 
@@ -488,13 +488,13 @@ logitNoTreatment <- logit(gotNoTreatment)
 
 #density hist
 par(mfrow=c(2,1))
-hist(logitTreatment, main='Group with treatment', xlab='Log-odds of Propensity Score', xlim=c(-5,5), ylim=c(0,0.6), col='darkblue', 
+hist(logitTreatment, main='Treatment group', xlab='Log-odds of Propensity Score', xlim=c(-5,5), ylim=c(0,0.6), col='darkblue', 
      prob = TRUE)   #shows density instead of frequency
 lines(density(logitTreatment),
       lwd = 2,
       col = "orange")
 
-hist(logitNoTreatment, main='Group without treatment', xlab='Log-odds of Propensity Score', xlim=c(-5,5),ylim=c(0.6,0), col='red', 
+hist(logitNoTreatment, main='Control group', xlab='Log-odds of Propensity Score', xlim=c(-5,5),ylim=c(0.6,0), col='red', 
      prob = TRUE)   #shows density instead of frequency
 lines(density(logitNoTreatment),
       lwd = 2,
@@ -588,7 +588,7 @@ summary(gmodel3)
 exp(coef(gmodel3))   
 print("===================================================")
 # => What is the odds ratio of treatment?
-print("The odds ratio of treatment is 1.315")          ################### CHECK THIS #################        
+print("The odds ratio of treatment is 1.296")          ################### CHECK THIS #################        
 ```
 
 ```{r}
@@ -596,7 +596,7 @@ print("The odds ratio of treatment is 1.315")          ################### CHECK
 gmodel3 <- glm(outcome.died ~ treatment.swang + aps1, family="binomial", data = matched)
 exp(coef(gmodel3))
 # => What is the odds ratio of treatment now?
-print("The odds ratio of treatment is now 1.339.")        ######### CHECK THIS #################      
+print("The odds ratio of treatment is now 1.312.")        ######### CHECK THIS #################      
 print("===================================================")
 ```
 
@@ -635,19 +635,43 @@ gotNoTreatment2 <- comparisonDF$RandomForest[comparisonDF$Treatment==0]
 
 #density hist
 par(mfrow=c(2,1))
-hist(gotTreatment2, main='Group with treatment', xlab='Propensity Score', xlim=c(0,1), ylim=c(0,3), col='darkblue', 
+hist(gotTreatment2, main='Treatment group', xlab='Propensity Score', xlim=c(0,1), ylim=c(0,3), col='darkblue', 
      prob = TRUE)   #shows density instead of frequency
 lines(density(gotTreatment2),
       lwd = 2,
       col = "orange")
 
-hist(gotNoTreatment2, main='Group without treatment', xlab='Propensity Score', xlim=c(0,1),ylim=c(3,0), col='red', 
+hist(gotNoTreatment2, main='Control group', xlab='Propensity Score', xlim=c(0,1),ylim=c(3,0), col='red', 
      prob = TRUE)   #shows density instead of frequency
 lines(density(gotNoTreatment2),
       lwd = 2,
       col = "orange")
 
 ```
+```{r}
+logitTreatment2 <- logit(gotTreatment2)
+logitNoTreatment2 <- logit(gotNoTreatment2)
+
+#frequency hist
+# par(mfrow=c(2,1))
+# hist(logitTreatment, main='Group with treatment', xlab='Log-odds of Propensity Score', xlim=c(-5,5), ylim=c(0,650), col='darkblue')
+# hist(logitNoTreatment, main='Group without treatment', xlab='Log-odds of Propensity Score', xlim=c(-5,5),ylim=c(650,0), col='red')
+
+#density hist
+par(mfrow=c(2,1))
+hist(logitTreatment2, main='Treatment group', xlab='Log-odds of Propensity Score', xlim=c(-4,4), ylim=c(0,0.6), col='darkblue', 
+     prob = TRUE)   #shows density instead of frequency
+lines(density(logitTreatment2),
+      lwd = 2,
+      col = "orange")
+
+hist(logitNoTreatment2, main='Control group', xlab='Log-odds of Propensity Score', xlim=c(-4,4),ylim=c(0.6,0), col='red', 
+     prob = TRUE)   #shows density instead of frequency
+lines(density(logitNoTreatment2),
+      lwd = 2,
+      col = "orange")
+```
+
 
 ```{r}
 pscoreRF_v <- c(pscoreRF[,1])   #creating a vector of the PS
@@ -670,13 +694,14 @@ addmargins(table(ExtractSmd(matchedtab2) > 0.2))
 print('There are no variables with bad balance (SMD>0.2).')
 ```
 
+
 ```{r}
 #2. Compare the results to those previously obtained by matching (via the Mahalanobis distance and the propensity score with logistic regression).
 
-print('When comparing the results obtain previously with the one with a random forest method, we can see that we obtain poor overlap for high propensity scores and we only have subjects without treatment.')
+print('When comparing the results obtain previously with the one with a random forest method, we can see that we obtain poor overlap for high propensity scores where we only have subjects without treatment.')
 
 
-######### CHECK THIS ################# 
+######### CHECK THIS perhaps we can use MAE? ################# 
 
 
 ```
@@ -687,7 +712,10 @@ print('When comparing the results obtain previously with the one with a random f
 print("We prefer the approach that uses logistic regression for different reasons:
       1. It relays on functional form assumption;
       2. We got better results in terms of propensity score;
-      3. It is more used so more documentation can be found.")         ######### CHECK THIS ################# 
+      3. It is easier to implement therefore more used so more documentation and explanation can be found.")         
+
+
+######### CHECK THIS ################# 
 
 
 ```
